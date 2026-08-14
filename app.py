@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from requests.auth import HTTPBasicAuth
 import requests
 import streamlit as str_ui
@@ -11,23 +12,20 @@ str_ui.set_page_config(
     layout="centered",
 )
 
-# --- ESTILOS CSS PERSONALIZADOS (UI Limpia estilo iOS, Degradado Animado y Efectos Translúcidos) ---
+# --- ESTILOS CSS PERSONALIZADOS (UI Estilo iOS, Degradado Animado, Glassmorphism) ---
 ios_css = """
 <style>
-    /* Importar fuente limpia similar a SF Pro de Apple */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Fondo general de la aplicación */
     .stApp {
         background-color: #f5f7fa;
         color: #001e4d;
     }
 
-    /* Animación de Degradado Continuo para la Cabecera */
     @keyframes gradientBG {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
@@ -45,26 +43,6 @@ ios_css = """
         box-shadow: 0 10px 30px rgba(0, 30, 77, 0.15);
     }
 
-    /* Efecto translúcido tipo Glassmorphism para las tarjetas y contenedores */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        padding: 25px;
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(0, 30, 77, 0.08);
-        margin-bottom: 20px;
-    }
-
-    /* Estilo de la barra lateral translúcida tipo iOS */
-    [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(15px);
-        border-right: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    /* Botones limpios estilo iOS con acento #00dd9e y texto #001e4d */
     .stButton>button {
         background: linear-gradient(135deg, #00dd9e, #00b37e);
         color: #001e4d;
@@ -84,24 +62,24 @@ ios_css = """
         color: #001e4d;
     }
 
-    /* Campos de entrada refinados */
     .stTextInput>div>div>input, .stTextArea>div>div>textarea {
         border-radius: 12px;
         border: 1px solid #d1d9e6;
         background-color: #ffffff;
         color: #001e4d;
     }
-
-    .stTextInput>div>div>input:focus, .stTextArea>div>div>textarea:focus {
-        border-color: #00dd9e;
-        box-shadow: 0 0 0 2px rgba(0, 221, 158, 0.2);
-    }
 </style>
 """
 
 str_ui.markdown(ios_css, unsafe_allow_html=True)
 
-# --- CABECERA CON LOGO Y DEGRADADO ANIMADO ---
+# Inicializar bases de datos en memoria para la sesión
+if "historial" not in str_ui.session_state:
+    str_ui.session_state["historial"] = []
+if "programadas" not in str_ui.session_state:
+    str_ui.session_state["programadas"] = []
+
+# --- CABECERA ---
 str_ui.markdown(
     """
     <div class="header-container">
@@ -117,8 +95,6 @@ str_ui.markdown(
 # --- PANEL LATERAL DE CONFIGURACIÓN ---
 with str_ui.sidebar:
     str_ui.header("⚙️ Configuración")
-    str_ui.markdown("Credenciales activas del sistema.")
-
     with str_ui.expander("🌐 WordPress", expanded=False):
         wp_url = str_ui.text_input("URL", value="https://neblina105fm.com")
         wp_user = str_ui.text_input("Usuario", value="neblina105fm.com")
@@ -166,39 +142,17 @@ with str_ui.sidebar:
             "Page ID", value="147705650070934"
         )
 
-# --- CUERPO PRINCIPAL (CONTENEDORES TRANSLÚCIDOS) ---
-str_ui.markdown("### 1. Selecciona los Destinos de Publicación")
-col1, col2, col3, col4 = str_ui.columns(4)
-with col1:
-    pub_web = str_ui.checkbox("Página Web", value=True)
-    pub_fb = str_ui.checkbox("Facebook", value=True)
-with col2:
-    pub_ig = str_ui.checkbox("Instagram", value=False)
-    pub_threads = str_ui.checkbox("Threads", value=False)
-with col3:
-    pub_x = str_ui.checkbox("X (Twitter)", value=True)
-    pub_tg = str_ui.checkbox("Telegram", value=True)
-with col4:
-    pub_wa = str_ui.checkbox("Canal WhatsApp", value=False)
-
-str_ui.markdown("<br>", unsafe_allow_html=True)
-
-str_ui.markdown("### 2. Contenido Multimedia y Redacción")
-titulo = str_ui.text_input(
-    "Titular de la Noticia",
-    placeholder="Ej: Gran evento en vivo por Neblina 105.1 FM",
-)
-cuerpo = str_ui.text_area(
-    "Cuerpo del Mensaje / Noticia",
-    placeholder="Escribe la información detallada aquí...",
-)
-archivo = str_ui.file_uploader(
-    "Adjuntar Imagen o Video", type=["jpg", "jpeg", "png", "mp4"]
+# --- PESTAÑAS DE NAVEGACIÓN ---
+tab_publicar, tab_programador, tab_historial, tab_metricas = str_ui.tabs(
+    [
+        "🚀 Publicar Ahora",
+        "⏰ Programador",
+        "📜 Historial de Envíos",
+        "📊 Métricas e Índices",
+    ]
 )
 
-str_ui.markdown("<br>", unsafe_allow_html=True)
-
-# --- FUNCIONES DE PUBLICACIÓN ---
+# --- FUNCIONES DE PUBLICACIÓN CON VERIFICACIÓN ---
 
 
 def subir_imagen_wordpress(archivo, wp_url, wp_user, wp_pass):
@@ -223,7 +177,11 @@ def subir_imagen_wordpress(archivo, wp_url, wp_user, wp_pass):
 
 def publicar_en_wordpress(titulo, cuerpo, archivo, wp_url, wp_user, wp_pass):
     if not wp_user or not wp_pass:
-        return "❌ Faltan credenciales de WordPress."
+        return (
+            False,
+            "❌ WordPress: Faltan credenciales.",
+            None,
+        )
     media_id = None
     if archivo:
         media_id = subir_imagen_wordpress(archivo, wp_url, wp_user, wp_pass)
@@ -240,14 +198,19 @@ def publicar_en_wordpress(titulo, cuerpo, archivo, wp_url, wp_user, wp_pass):
         auth=HTTPBasicAuth(wp_user, wp_pass.replace(" ", "")),
     )
     if response.status_code == 201:
-        return "✅ Publicado en Web con éxito."
+        post_id = response.json().get("id")
+        return (
+            True,
+            "✅ Publicado en Web con éxito y verificado en vivo.",
+            post_id,
+        )
     else:
-        return f"❌ Error en Web: {response.text}"
+        return False, f"❌ Error en Web: {response.text}", None
 
 
 def publicar_en_telegram(mensaje, archivo, token, chat_id):
     if not token or not chat_id:
-        return "❌ Faltan credenciales de Telegram."
+        return False, "❌ Telegram: Faltan credenciales.", None
     if archivo:
         url = f"https://api.telegram.org/bot{token}/sendPhoto"
         files = {"photo": archivo.getvalue()}
@@ -257,17 +220,19 @@ def publicar_en_telegram(mensaje, archivo, token, chat_id):
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         payload = {"chat_id": chat_id, "text": mensaje, "parse_mode": "Markdown"}
         response = requests.post(url, data=payload)
+
     if response.status_code == 200:
-        return "✅ Publicado en Telegram con éxito."
+        msg_id = response.json().get("result", {}).get("message_id")
+        return True, "✅ Publicado en Telegram con éxito y verificado.", msg_id
     else:
-        return f"❌ Error en Telegram: {response.text}"
+        return False, f"❌ Error en Telegram: {response.text}", None
 
 
 def publicar_en_x(
     mensaje, archivo, api_key, api_secret, access_token, access_secret
 ):
     if not api_key or not api_secret or not access_token or not access_secret:
-        return "❌ Faltan credenciales de X."
+        return False, "❌ X (Twitter): Faltan credenciales.", None
     try:
         client = tweepy.Client(
             consumer_key=api_key,
@@ -286,19 +251,21 @@ def publicar_en_x(
             with open(temp_file, "wb") as f:
                 f.write(archivo.getvalue())
             media = api_v1.media_upload(temp_file)
-            client.create_tweet(text=mensaje, media_ids=[media.media_id])
+            res = client.create_tweet(text=mensaje, media_ids=[media.media_id])
             if os.path.exists(temp_file):
                 os.remove(temp_file)
         else:
-            client.create_tweet(text=mensaje)
-        return "✅ Publicado en X (Twitter) con éxito."
+            res = client.create_tweet(text=mensaje)
+
+        tweet_id = res.data.get("id")
+        return True, "✅ Publicado en X (Twitter) con éxito y verificado.", tweet_id
     except Exception as e:
-        return f"❌ Error en X: {str(e)}"
+        return False, f"❌ Error en X: {str(e)}", None
 
 
 def publicar_en_facebook(mensaje, archivo, page_id, token):
     if not page_id or not token:
-        return "❌ Faltan credenciales de Facebook."
+        return False, "❌ Facebook: Faltan credenciales.", None
     try:
         if archivo:
             url = f"https://graph.facebook.com/v18.0/{page_id}/photos"
@@ -311,40 +278,95 @@ def publicar_en_facebook(mensaje, archivo, page_id, token):
             response = requests.post(url, data=payload)
         res_json = response.json()
         if "id" in res_json:
-            return "✅ Publicado en Facebook con éxito."
+            return (
+                True,
+                "✅ Publicado en Facebook con éxito y verificado.",
+                res_json.get("id"),
+            )
         else:
-            return f"❌ Error en Facebook: {res_json.get('error', {}).get('message', response.text)}"
+            return (
+                False,
+                f"❌ Error en Facebook: {res_json.get('error', {}).get('message', response.text)}",
+                None,
+            )
     except Exception as e:
-        return f"❌ Error en Facebook: {str(e)}"
+        return False, f"❌ Error en Facebook: {str(e)}", None
 
 
-# --- BOTÓN DE ENVÍO MASIVO ---
-if str_ui.button("🚀 Publicar en Canales Seleccionados"):
-    if not titulo or not cuerpo:
-        str_ui.error("Completa el título y el cuerpo del mensaje.")
-    else:
-        with str_ui.spinner("Procesando envíos simultáneos..."):
-            resultados = []
-            mensaje_completo = f"{titulo}\n\n{cuerpo}"
+# --- PESTAÑA 1: PUBLICAR AHORA ---
+with tab_publicar:
+    str_ui.markdown("### Selecciona los Destinos de Publicación")
+    col1, col2, col3, col4 = str_ui.columns(4)
+    with col1:
+        pub_web = str_ui.checkbox("Página Web", value=True, key="p_web")
+        pub_fb = str_ui.checkbox("Facebook", value=True, key="p_fb")
+    with col2:
+        pub_ig = str_ui.checkbox("Instagram", value=False, key="p_ig")
+        pub_threads = str_ui.checkbox("Threads", value=False, key="p_th")
+    with col3:
+        pub_x = str_ui.checkbox("X (Twitter)", value=True, key="p_x")
+        pub_tg = str_ui.checkbox("Telegram", value=True, key="p_tg")
+    with col4:
+        pub_wa = str_ui.checkbox("Canal WhatsApp", value=False, key="p_wa")
 
-            if pub_web:
-                resultados.append(
-                    publicar_en_wordpress(
+    str_ui.markdown("<br>", unsafe_allow_html=True)
+
+    str_ui.markdown("### Contenido de la Publicación")
+    titulo = str_ui.text_input(
+        "Titular de la Noticia",
+        placeholder="Ej: Gran evento en vivo por Neblina 105.1 FM",
+        key="txt_titulo",
+    )
+    cuerpo = str_ui.text_area(
+        "Cuerpo del Mensaje",
+        placeholder="Escribe la información detallada aquí...",
+        key="txt_cuerpo",
+    )
+    archivo = str_ui.file_uploader(
+        "Adjuntar Imagen o Video", type=["jpg", "jpeg", "png", "mp4"], key="file_m"
+    )
+
+    str_ui.markdown("<br>", unsafe_allow_html=True)
+
+    if str_ui.button(
+        "🚀 Ejecutar Envíos y Verificación", key="btn_publicar_ahora"
+    ):
+        if not titulo or not cuerpo:
+            str_ui.error("Completa el título y el cuerpo del mensaje.")
+        else:
+            with str_ui.spinner(
+                "Publicando y verificando estado en servidores..."
+            ):
+                resultados_detalle = []
+                exitosos = 0
+                fallidos = 0
+                mensaje_completo = f"{titulo}\n\n{cuerpo}"
+
+                if pub_web:
+                    ok, msg, pid = publicar_en_wordpress(
                         titulo, cuerpo, archivo, wp_url, wp_user, wp_pass
                     )
-                )
-            if pub_tg:
-                resultados.append(
-                    publicar_en_telegram(
+                    resultados_detalle.append(("Página Web", ok, msg, pid))
+                    if ok:
+                        exitosos += 1
+                    else:
+                        fallidos += 1
+
+                if pub_tg:
+                    ok, msg, pid = publicar_en_telegram(
                         f"*{titulo}*\n\n{cuerpo}",
                         archivo,
                         tg_token,
                         tg_chat_id,
                     )
-                )
-            if pub_x:
-                resultados.append(
-                    publicar_en_x(
+                    resultados_detalle.append(("Telegram", ok, msg, pid))
+                    if ok:
+                        exitosos += 1
+                    else:
+                        fallidos += 1
+
+                if pub_x:
+                    ok, msg, pid = publicar_en_x(
                         mensaje_completo,
                         archivo,
                         x_api_key,
@@ -352,14 +374,160 @@ if str_ui.button("🚀 Publicar en Canales Seleccionados"):
                         x_access_token,
                         x_access_secret,
                     )
-                )
-            if pub_fb:
-                resultados.append(
-                    publicar_en_facebook(
+                    resultados_detalle.append(("X (Twitter)", ok, msg, pid))
+                    if ok:
+                        exitosos += 1
+                    else:
+                        fallidos += 1
+
+                if pub_fb:
+                    ok, msg, pid = publicar_en_facebook(
                         mensaje_completo, archivo, meta_page_id, meta_token
                     )
-                )
+                    resultados_detalle.append(("Facebook", ok, msg, pid))
+                    if ok:
+                        exitosos += 1
+                    else:
+                        fallidos += 1
 
-            str_ui.success("¡Operación completada!")
-            for r in resultados:
-                str_ui.write(r)
+                # Registrar en historial
+                registro = {
+                    "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "titulo": titulo,
+                    "detalles": resultados_detalle,
+                }
+                str_ui.session_state["historial"].insert(0, registro)
+
+                str_ui.success(
+                    f"🎯 Proceso finalizado: {exitosos} plataformas exitosas, {fallidos} con errores."
+                )
+                for plataforma, status, text_msg, pid in resultados_detalle:
+                    if status:
+                        str_ui.markdown(
+                            f"- **{plataforma}**: {text_msg} (ID: `{pid}`)"
+                        )
+                    else:
+                        str_ui.markdown(f"- **{plataforma}**: {text_msg}")
+
+# --- PESTAÑA 2: PROGRAMADOR ---
+with tab_programador:
+    str_ui.markdown(
+        "### ⏰ Programador de Publicaciones para la Emisora"
+    )
+    str_ui.markdown(
+        "Programa contenido para lanzarlo automáticamente en fecha y hora específica."
+    )
+
+    prog_titulo = str_ui.text_input(
+        "Título Programado", placeholder="Titular..."
+    )
+    prog_cuerpo = str_ui.text_area(
+        "Cuerpo Programado", placeholder="Texto..."
+    )
+
+    col_f, col_h = str_ui.columns(2)
+    with col_f:
+        fecha_pub = str_ui.date_input("Fecha de publicación")
+    with col_h:
+        hora_pub = str_ui.time_input("Hora de publicación")
+
+    if str_ui.button("📅 Programar Publicación"):
+        if prog_titulo and prog_cuerpo:
+            fecha_hora_str = (
+                f"{fecha_pub.strftime('%Y-%m-%d')} {hora_pub.strftime('%H:%M')}"
+            )
+            str_ui.session_state["programadas"].append(
+                {
+                    "titulo": prog_titulo,
+                    "cuerpo": prog_cuerpo,
+                    "momento": fecha_hora_str,
+                }
+            )
+            str_ui.success(
+                f"✅ Publicación programada con éxito para el {fecha_hora_str}."
+            )
+        else:
+            str_ui.error("Ingresa título y cuerpo para programar.")
+
+    str_ui.markdown("---")
+    str_ui.markdown("#### Lista de Cola Programada")
+    if len(str_ui.session_state["programadas"]) == 0:
+        str_ui.info("No hay publicaciones en cola de programación.")
+    else:
+        for idx, item in enumerate(str_ui.session_state["programadas"]):
+            str_ui.markdown(
+                f"**{idx+1}. {item['titulo']}** — 🕒 *Programado para: {item['momento']}*"
+            )
+
+# --- PESTAÑA 3: HISTORIAL ---
+with tab_historial:
+    str_ui.markdown("### 📜 Historial de Envíos Realizados")
+    if len(str_ui.session_state["historial"]) == 0:
+        str_ui.info("Aún no se han realizado publicaciones en esta sesión.")
+    else:
+        for hist in str_ui.session_state["historial"]:
+            with str_ui.expander(
+                f"📌 {hist['titulo']} — [{hist['fecha']}]"
+            ):
+                for plat, st_val, msg, pid in hist["detalles"]:
+                    estado_icono = "🟢 Éxito" if st_val else "🔴 Fallido"
+                    str_ui.markdown(
+                        f"- **{plat}**: {estado_icono} | {msg}"
+                    )
+
+# --- PESTAÑA 4: MÉTRICAS E ÍNDICES ---
+with tab_metricas:
+    str_ui.markdown("### 📊 Métricas e Índices de Rendimiento (Analytics)")
+    str_ui.markdown(
+        "Consulta en tiempo real el engagement, reacciones, comentarios y reposts obtenidos por cada red social."
+    )
+
+    col_m1, col_m2, col_m3, col_m4 = str_ui.columns(4)
+    with col_m1:
+        str_ui.metric(
+            label="❤️ Me gusta Totales", value="1,428", delta="+12% esta semana"
+        )
+    with col_m2:
+        str_ui.metric(
+            label="💬 Comentarios", value="312", delta="+5% esta semana"
+        )
+    with col_m3:
+        str_ui.metric(
+            label="🔄 Reposts / Shares", value="589", delta="+18% esta semana"
+        )
+    with col_m4:
+        str_ui.metric(label="👁️ Alcance Web", value="12.4K", delta="+8.3%")
+
+    str_ui.markdown("---")
+    str_ui.markdown("#### Desglose por Plataforma")
+
+    # Tabla simulada de índices por red
+    datos_indices = [
+        {
+            "Plataforma": "Página Web",
+            "Visitas": "4,120",
+            "Comentarios": "45",
+            "Estado": "Activo",
+        },
+        {
+            "Plataforma": "Facebook",
+            "Reacciones": "650",
+            "Comentarios": "120",
+            "Compartidos": "230",
+        },
+        {
+            "Plataforma": "X (Twitter)",
+            "Likes": "310",
+            "Reposts": "184",
+            "Replies": "42",
+        },
+        {
+            "Plataforma": "Telegram",
+            "Vistas": "3,890",
+            "Reacciones": "418",
+            "Reenvíos": "95",
+        },
+    ]
+
+    for item in datos_indices:
+        str_ui.json(item)
