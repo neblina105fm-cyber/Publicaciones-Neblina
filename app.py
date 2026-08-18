@@ -1,7 +1,12 @@
 import streamlit as st
 
-# Configuración de la página
-st.set_page_config(page_title="Sorteo Neblina 105.5 FM", layout="wide")
+# Configuración de la página para computadora (layout wide)
+st.set_page_config(
+    page_title="Sorteo Neblina 105.5 FM",
+    page_icon="🎯",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # Código de la aplicación web integrado en Streamlit
 html_code = """
@@ -10,7 +15,7 @@ html_code = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorteo Neblina 105.5 FM</title>
+    <title>Sorteo Neblina 105.5 FM - Escritorio</title>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -51,6 +56,7 @@ html_code = """
             gap: 20px;
         }
 
+        /* HEADER DE ESCRITORIO */
         header {
             display: flex;
             justify-content: space-between;
@@ -58,12 +64,10 @@ html_code = """
             background: var(--card-bg);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
-            padding: 16px 24px;
+            padding: 16px 30px;
             border-radius: var(--radius-ios);
             box-shadow: var(--shadow-ios);
             border: 1px solid var(--border-color);
-            flex-wrap: wrap;
-            gap: 15px;
         }
 
         .logo-area {
@@ -73,47 +77,17 @@ html_code = """
         }
 
         .logo-img {
-            height: 42px;
+            height: 45px;
             object-fit: contain;
         }
 
-        .device-selector {
-            display: flex;
-            background: rgba(0, 0, 0, 0.04);
-            padding: 4px;
-            border-radius: 12px;
-            gap: 4px;
+        header h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -0.4px;
         }
 
-        .device-btn {
-            background: transparent;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .device-btn.active {
-            background: #ffffff;
-            color: var(--text-primary);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .viewport-frame {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .viewport-frame.desktop { max-width: 100%; }
-        .viewport-frame.tablet { max-width: 768px; }
-        .viewport-frame.mobile { max-width: 414px; }
-
+        /* SECCIONES / STAGES */
         .stage {
             display: none;
             width: 100%;
@@ -124,6 +98,7 @@ html_code = """
             border-radius: var(--radius-ios);
             box-shadow: var(--shadow-ios);
             border: 1px solid var(--border-color);
+            animation: fadeIn 0.4s ease forwards;
         }
 
         .stage.active {
@@ -132,9 +107,15 @@ html_code = """
             gap: 20px;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* DISEÑO ETAPA 1 */
         .setup-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
         }
 
@@ -147,6 +128,7 @@ html_code = """
         .panel-box h3 {
             font-size: 0.95rem;
             font-weight: 600;
+            color: var(--text-primary);
         }
 
         textarea, select, input {
@@ -157,15 +139,24 @@ html_code = """
             background: rgba(255, 255, 255, 0.9);
             font-size: 0.9rem;
             outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        textarea { resize: vertical; height: 160px; }
+        textarea:focus, select:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            height: 180px;
+        }
 
         .participants-list-preview {
             background: rgba(0,0,0,0.015);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            height: 160px;
+            height: 180px;
             overflow-y: auto;
             padding: 8px;
             display: flex;
@@ -184,6 +175,7 @@ html_code = """
             align-items: center;
         }
 
+        /* BOTONES ESTILO iOS */
         .ios-btn {
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
             color: white;
@@ -193,18 +185,25 @@ html_code = """
             font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 199, 190, 0.25);
+            transition: transform 0.1s, opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
             width: 100%;
         }
 
+        .ios-btn:hover { opacity: 0.95; transform: scale(1.01); }
+        .ios-btn:active { transform: scale(0.98); }
+
+        /* ETAPA 2 Y 3: JUEGO ESCRITORIO */
         .game-layout {
             display: grid;
-            grid-template-columns: 260px 1fr 280px;
+            grid-template-columns: 280px 1fr 300px;
             gap: 20px;
             align-items: center;
-        }
-
-        @media (max-width: 950px) {
-            .game-layout { grid-template-columns: 1fr; }
         }
 
         .wheel-container {
@@ -216,29 +215,32 @@ html_code = """
 
         .wheel-wrapper {
             position: relative;
-            width: 320px;
-            height: 320px;
+            width: 360px;
+            height: 360px;
         }
 
         canvas {
             width: 100%;
             height: 100%;
             border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
 
         .wheel-pointer {
             position: absolute;
-            top: -12px;
+            top: -14px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-top: 22px solid #ff3b30;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 24px solid #ff3b30;
             z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
         }
 
+        /* TARJETA DE GANADOR DINÁMICA */
         .winner-display-box {
             background: linear-gradient(135deg, rgba(0, 199, 190, 0.08), rgba(0, 122, 255, 0.08));
             border: 2px dashed var(--accent-cyan);
@@ -262,229 +264,402 @@ html_code = """
             align-items: center;
             justify-content: center;
             border-radius: 50%;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
         }
 
-        .winner-name { font-size: 1.4rem; font-weight: 700; }
-        .status-text { font-size: 0.9rem; color: var(--text-secondary); }
-        .winners-history { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .winner-pill { background: white; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .winner-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .winners-history {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .winner-pill {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .footer-info {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
 
     <div class="app-container">
+        <!-- HEADER DE ESCRITORIO CON LOGO OFICIAL -->
         <header>
             <div class="logo-area">
-                <img src="https://i0.wp.com/neblina105fm.com/wp-content/uploads/2026/03/Recurso-5%402xQaaa-scaled.png?fit=2560%2C891&ssl=1" alt="Neblina 105.5 FM" class="logo-img" style="height: 40px;">
+                <img src="https://i0.wp.com/neblina105fm.com/wp-content/uploads/2026/03/Recurso-5%402xQaaa-scaled.png?fit=2560%2C891&ssl=1" alt="Neblina 105.5 FM" class="logo-img">
             </div>
-            <div class="device-selector">
-                <button class="device-btn active" onclick="setDevice('desktop', this)">💻 Escritorio</button>
-                <button class="device-btn" onclick="setDevice('tablet', this)">📱 Tablet</button>
-                <button class="device-btn" onclick="setDevice('mobile', this)">📱 Móvil</button>
-            </div>
-            <div id="header-stats" class="status-text">Participantes: 0</div>
+            <div id="header-stats" class="status-text" style="font-weight: 600;">Participantes: 0</div>
         </header>
 
-        <div class="viewport-frame desktop" id="viewport-frame">
-            <section id="stage-1" class="stage active">
-                <div class="setup-grid">
-                    <div class="panel-box">
-                        <h3>👥 Participantes (Máx. 150)</h3>
-                        <textarea id="participants-input" placeholder="Escribe o pega los nombres (uno por línea)..."></textarea>
-                        <div class="status-text">Total: <span id="count-display">0</span> / 150</div>
-                    </div>
+        <!-- ETAPA 1: INGRESO DE PARTICIPANTES Y CONFIGURACIÓN -->
+        <section id="stage-1" class="stage active">
+            <div class="setup-grid">
+                <div class="panel-box">
+                    <h3>👥 Ingresar Participantes (Máx. 150)</h3>
+                    <textarea id="participants-input" placeholder="Escribe o pega los nombres (uno por línea)..."></textarea>
+                    <div class="footer-info">Total actual: <span id="count-display">0</span> / 150</div>
+                </div>
 
-                    <div class="panel-box">
-                        <h3>📋 Puestos Generados</h3>
-                        <div class="participants-list-preview" id="preview-list">
-                            <div class="preview-item">Aún no hay participantes...</div>
-                        </div>
-                    </div>
-
-                    <div class="panel-box">
-                        <h3>⚙️ Opciones de Sorteo</h3>
-                        <label for="winners-count" class="status-text">Ganadores a sacar por jugada:</label>
-                        <select id="winners-count">
-                            <option value="1">1 Ganador</option>
-                            <option value="2">2 Ganadores</option>
-                            <option value="3">3 Ganadores</option>
-                            <option value="5">5 Ganadores</option>
-                        </select>
-                        <div style="margin-top: auto; padding-top: 15px;">
-                            <button class="ios-btn" onclick="goToStage2()">Configurar Rueda ➔</button>
-                        </div>
+                <div class="panel-box">
+                    <h3>📋 Puestos Generados</h3>
+                    <div class="participants-list-preview" id="preview-list">
+                        <div class="preview-item" style="color:var(--text-secondary)">Aún no hay participantes...</div>
                     </div>
                 </div>
-            </section>
 
-            <section id="stage-2" class="stage">
-                <div class="game-layout">
-                    <div class="panel-box">
-                        <h3>📌 En Juego</h3>
-                        <div class="participants-list-preview" id="active-participants-list" style="height: 240px;"></div>
-                    </div>
-
-                    <div class="wheel-container">
-                        <div class="wheel-wrapper">
-                            <div class="wheel-pointer"></div>
-                            <canvas id="wheelCanvas" width="350" height="350"></canvas>
-                        </div>
-                        <div style="margin-top: 15px; display: flex; gap: 8px; width: 100%;">
-                            <button class="ios-btn" id="spin-btn" onclick="startBatchSpin()">🎯 ¡Girar!</button>
-                            <button class="ios-btn" style="background: #e5e5ea; color: #000;" onclick="resetApp()">🔄</button>
-                        </div>
-                    </div>
-
-                    <div class="panel-box">
-                        <h3>🏆 Ganador Actual</h3>
-                        <div class="winner-display-box" id="current-winner-card">
-                            <div class="winner-avatar">🎁</div>
-                            <div class="winner-name" id="display-winner-name">Listo para girar</div>
-                            <div class="status-text" id="spin-status-msg">Gira para elegir ganador(es)</div>
-                        </div>
-                        <div class="winners-history" id="winners-history-list"></div>
+                <div class="panel-box">
+                    <h3>⚙️ Opciones de Sorteo</h3>
+                    <label for="winners-count" class="status-text">Ganadores a sacar por jugada:</label>
+                    <select id="winners-count">
+                        <option value="1">1 Ganador</option>
+                        <option value="2">2 Ganadores</option>
+                        <option value="3">3 Ganadores</option>
+                        <option value="5">5 Ganadores</option>
+                    </select>
+                    <div style="margin-top: auto; padding-top: 15px;">
+                        <button class="ios-btn" onclick="goToStage2()">
+                            <span>Configurar Rueda</span> ➔
+                        </button>
                     </div>
                 </div>
-            </section>
-        </div>
+            </div>
+        </section>
+
+        <!-- ETAPA 2 Y 3: RULETA Y SORTEO DINÁMICO -->
+        <section id="stage-2" class="stage">
+            <div class="game-layout">
+                <div class="panel-box">
+                    <h3>📌 Participantes en Juego</h3>
+                    <div class="participants-list-preview" id="active-participants-list" style="height: 260px;"></div>
+                </div>
+
+                <div class="wheel-container">
+                    <div class="wheel-wrapper">
+                        <div class="wheel-pointer"></div>
+                        <canvas id="wheelCanvas" width="380" height="380"></canvas>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; gap: 8px; width: 100%;">
+                        <button class="ios-btn" id="spin-btn" onclick="startBatchSpin()">
+                            🎯 ¡Girar Ruleta!
+                        </button>
+                        <button class="ios-btn" style="background: rgba(0,0,0,0.06); color: var(--text-primary); width: 55px;" onclick="resetApp()" title="Reiniciar">
+                            🔄
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-box">
+                    <h3>🏆 Ganador Actual</h3>
+                    <div class="winner-display-box" id="current-winner-card">
+                        <div class="winner-avatar">🎁</div>
+                        <div class="winner-name" id="display-winner-name">Listo para girar</div>
+                        <div class="status-text" id="spin-status-msg">Gira para elegir ganador(es)</div>
+                    </div>
+                    <div class="winners-history" id="winners-history-list"></div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <script>
         const vectorEmojis = ["⭐", "🎉", "🔥", "💎", "🍀", "🚀", "🎨", "🎵", "🏆", "🎁", "✨", "💫"];
-        let participants = [], activeParticipants = [], targetWinnersCount = 1, pendingBatchWinners = 0, isSpinning = false;
+        
+        let participants = [];
+        let activeParticipants = [];
+        let targetWinnersCount = 1;
+        let pendingBatchWinners = 0;
+        let isSpinning = false;
+        
         const canvas = document.getElementById('wheelCanvas');
         const ctx = canvas.getContext('2d');
-        let currentAngle = 0, spinVelocity = 0;
-        const wheelColors = ["#FF3B30", "#FF9500", "#FFCC00", "#4CD964", "#5AC8FA", "#007AFF", "#5856D6", "#FF2D55", "#00C7BE"];
-
-        function setDevice(type, btn) {
-            document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('viewport-frame').className = `viewport-frame ${type}`;
-        }
+        let currentAngle = 0;
+        let spinVelocity = 0;
+        
+        const wheelColors = [
+            "#FF3B30", "#FF9500", "#FFCC00", "#4CD964", 
+            "#5AC8FA", "#007AFF", "#5856D6", "#FF2D55", "#00C7BE"
+        ];
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playTick() {
+        
+        function playTickSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
             osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.connect(g); g.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.04);
+            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.04);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
         }
-        function playWin() {
+
+        function playWinSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            [523, 659, 783, 1046].forEach((f, i) => {
-                const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-                osc.frequency.setValueAtTime(f, audioCtx.currentTime + i * 0.06);
-                osc.connect(g); g.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + i * 0.06);
-                osc.stop(audioCtx.currentTime + i * 0.06 + 0.3);
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, index) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.06);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime + index * 0.06);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.06 + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + index * 0.06);
+                osc.stop(audioCtx.currentTime + index * 0.06 + 0.3);
             });
         }
 
         document.getElementById('participants-input').addEventListener('input', (e) => {
-            participants = e.target.value.split('\\n').map(p => p.trim()).filter(p => p).slice(0, 150);
+            const rawText = e.target.value;
+            const lines = rawText.split('\\n').map(p => p.trim()).filter(p => p.length > 0);
+            participants = lines.slice(0, 150);
+
             document.getElementById('count-display').innerText = participants.length;
             document.getElementById('header-stats').innerText = `Participantes: ${participants.length}`;
             updatePreviewList();
         });
 
         function updatePreviewList() {
-            const c = document.getElementById('preview-list');
-            c.innerHTML = participants.length ? '' : '<div class="preview-item">Aún no hay participantes...</div>';
-            participants.forEach((p, i) => {
-                c.innerHTML += `<div class="preview-item"><span>Puesto ${i + 1}: ${p}</span><span>${vectorEmojis[i % vectorEmojis.length]}</span></div>`;
+            const previewContainer = document.getElementById('preview-list');
+            previewContainer.innerHTML = '';
+            
+            if (participants.length === 0) {
+                previewContainer.innerHTML = '<div class="preview-item" style="color:var(--text-secondary)">Aún no hay participantes...</div>';
+                return;
+            }
+
+            participants.forEach((name, index) => {
+                const randomEmoji = vectorEmojis[index % vectorEmojis.length];
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.innerHTML = `<span>Puesto ${index + 1}: ${name}</span><span>${randomEmoji}</span>`;
+                previewContainer.appendChild(div);
             });
         }
 
         function goToStage2() {
-            if (!participants.length) return alert("Ingresa al menos un participante.");
+            if (participants.length === 0) {
+                alert("Por favor, ingresa al menos un participante.");
+                return;
+            }
+
             targetWinnersCount = parseInt(document.getElementById('winners-count').value);
             activeParticipants = [...participants];
+            
             document.getElementById('stage-1').classList.remove('active');
             document.getElementById('stage-2').classList.add('active');
-            updateActiveUI(); drawWheel();
+
+            updateActiveParticipantsUI();
+            drawWheel();
         }
 
-        function updateActiveUI() {
-            const c = document.getElementById('active-participants-list');
-            c.innerHTML = '';
-            activeParticipants.forEach((p, i) => c.innerHTML += `<div class="preview-item"><span>${i + 1}. ${p}</span></div>`);
+        function updateActiveParticipantsUI() {
+            const container = document.getElementById('active-participants-list');
+            container.innerHTML = '';
+            activeParticipants.forEach((p, idx) => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.innerHTML = `<span>${idx + 1}. ${p}</span>`;
+                container.appendChild(div);
+            });
         }
 
         function drawWheel() {
-            const n = activeParticipants.length, cx = canvas.width / 2, cy = canvas.height / 2, r = canvas.width / 2 - 8;
+            const numSegments = activeParticipants.length;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2 - 8;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (!n) {
-                ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-                ctx.fillStyle = "#e5e5ea"; ctx.fill(); return;
+
+            if (numSegments === 0) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = "#e5e5ea";
+                ctx.fill();
+                return;
             }
-            const arc = (2 * Math.PI) / n;
-            for (let i = 0; i < n; i++) {
-                const sa = currentAngle + i * arc, ea = sa + arc;
-                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, sa, ea);
-                ctx.fillStyle = wheelColors[i % wheelColors.length]; ctx.fill();
-                ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(sa + arc / 2);
-                ctx.textAlign = "right"; ctx.fillStyle = "#fff"; ctx.font = "bold 11px sans-serif";
-                ctx.fillText(activeParticipants[i].substring(0, 8), r - 20, 4);
+
+            const arcSize = (2 * Math.PI) / numSegments;
+
+            for (let i = 0; i < numSegments; i++) {
+                const startAngle = currentAngle + i * arcSize;
+                const endAngle = startAngle + arcSize;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+
+                ctx.fillStyle = wheelColors[i % wheelColors.length];
+                ctx.fill();
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 11px -apple-system, sans-serif";
+                
+                let displayName = activeParticipants[i];
+                if (displayName.length > 10) displayName = displayName.substring(0, 8) + "..";
+                
+                ctx.fillText(displayName, radius - 20, 4);
                 ctx.restore();
             }
-            ctx.beginPath(); ctx.arc(cx, cy, 30, 0, 2 * Math.PI);
-            ctx.fillStyle = "#fff"; ctx.fill();
-            ctx.font = "18px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillText("🎯", cx, cy);
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
+            ctx.fillStyle = "#ffffff";
+            ctx.shadowColor = "rgba(0, 0, 0, 0.12)";
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.font = "18px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("🎯", centerX, centerY);
         }
 
         function startBatchSpin() {
-            if (isSpinning || !activeParticipants.length) return;
-            pendingBatchWinners = Math.min(targetWinnersCount, activeParticipants.length);
-            runSpin();
-        }
-
-        function runSpin() {
-            if (pendingBatchWinners <= 0 || !activeParticipants.length) {
-                isSpinning = false;
-                document.getElementById('spin-status-msg').innerText = "¡Sorteo finalizado!";
+            if (isSpinning) return;
+            if (activeParticipants.length === 0) {
+                alert("¡Ya no quedan participantes activos!");
                 return;
             }
-            isSpinning = true;
-            document.getElementById('spin-status-msg').innerText = `Faltan ${pendingBatchWinners} ganadores...`;
-            spinVelocity = Math.random() * 0.18 + 0.38;
-            let lastSeg = -1;
 
-            function animate() {
+            pendingBatchWinners = Math.min(targetWinnersCount, activeParticipants.length);
+            executeNextSpin();
+        }
+
+        function executeNextSpin() {
+            if (pendingBatchWinners <= 0 || activeParticipants.length === 0) {
+                isSpinning = false;
+                document.getElementById('spin-btn').style.opacity = '1';
+                document.getElementById('spin-status-msg').innerText = "¡Ronda de sorteo finalizada!";
+                return;
+            }
+
+            isSpinning = true;
+            document.getElementById('spin-btn').style.opacity = '0.5';
+            document.getElementById('spin-status-msg').innerText = `Faltan ${pendingBatchWinners} ganadores por sacar...`;
+
+            spinVelocity = Math.random() * 0.18 + 0.38;
+            let lastSegmentIndex = -1;
+
+            function animateSpin() {
                 currentAngle += spinVelocity;
                 spinVelocity *= 0.982;
-                const n = activeParticipants.length, arc = (2 * Math.PI) / n;
-                const seg = Math.floor(((2 * Math.PI - (currentAngle % (2 * Math.PI))) % (2 * Math.PI)) / arc);
-                if (seg !== lastSeg) { playTick(); lastSeg = seg; }
+
+                const numSegments = activeParticipants.length;
+                const arcSize = (2 * Math.PI) / numSegments;
+                
+                // Corrección rigurosa y síncrona: mapeo matemático exacto del puntero superior (270°) con el índice del array
+                const normalizedAngle = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+                const pointerAngle = (1.5 * Math.PI - normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
+                const currentSegment = Math.floor(pointerAngle / arcSize) % numSegments;
+
+                if (currentSegment !== lastSegmentIndex) {
+                    playTickSound();
+                    lastSegmentIndex = currentSegment;
+                }
+
                 drawWheel();
-                if (spinVelocity > 0.002) requestAnimationFrame(animate);
-                else { isSpinning = false; finishSpin(seg); }
+
+                if (spinVelocity > 0.002) {
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    isSpinning = false;
+                    processWinner(currentSegment);
+                }
             }
-            requestAnimationFrame(animate);
+
+            requestAnimationFrame(animateSpin);
         }
 
-        function finishSpin(idx) {
-            const name = activeParticipants[idx], emoji = vectorEmojis[Math.floor(Math.random() * vectorEmojis.length)];
-            playWin();
-            document.getElementById('display-winner-name').innerText = name;
-            document.getElementById('current-winner-card').querySelector('.winner-avatar').innerText = emoji;
-            document.getElementById('winners-history-list').innerHTML = `<div class="winner-pill"><span>${emoji}</span> <span>${name}</span></div>` + document.getElementById('winners-history-list').innerHTML;
+        function processWinner(winningIndex) {
+            // Sincronización absoluta: el nombre extraído es exactamente el mismo que se calculó al detenerse el puntero
+            const winnerName = activeParticipants[winningIndex];
+            const randomEmoji = vectorEmojis[Math.floor(Math.random() * vectorEmojis.length)];
             
-            activeParticipants.splice(idx, 1);
-            updateActiveUI(); drawWheel();
+            playWinSound();
+
+            // Mostrar el nombre idéntico en la tarjeta grande central
+            document.getElementById('display-winner-name').innerText = winnerName;
+            document.getElementById('current-winner-card').querySelector('.winner-avatar').innerText = randomEmoji;
+
+            // Registrar en el historial de ganadores
+            const historyList = document.getElementById('winners-history-list');
+            const pill = document.createElement('div');
+            pill.className = 'winner-pill';
+            pill.innerHTML = `<span>${randomEmoji}</span> <span>${winnerName}</span>`;
+            historyList.prepend(pill);
+
+            // Eliminar de los participantes activos para evitar repetición
+            activeParticipants.splice(winningIndex, 1);
+            updateActiveParticipantsUI();
+            drawWheel();
+
             pendingBatchWinners--;
 
-            if (pendingBatchWinners > 0) setTimeout(runSpin, 1500);
-            else document.getElementById('spin-status-msg').innerText = "¡Todos seleccionados!";
+            if (pendingBatchWinners > 0) {
+                setTimeout(() => {
+                    executeNextSpin();
+                }, 1500);
+            } else {
+                document.getElementById('spin-btn').style.opacity = '1';
+                document.getElementById('spin-status-msg').innerText = "¡Todos los ganadores seleccionados!";
+            }
         }
 
-        function resetApp() { location.reload(); }
+        function resetApp() {
+            location.reload();
+        }
     </script>
 </body>
 </html>
 """
 
-st.components.v1.html(html_code, height=750, scrolling=True)
+# Renderizar la aplicación en Streamlit
+st.components.v1.html(html_code, height=720, scrolling=True)
