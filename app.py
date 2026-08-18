@@ -82,9 +82,10 @@ html_code = """
         }
 
         header h1 {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 600;
             letter-spacing: -0.4px;
+            color: var(--text-primary);
         }
 
         /* SECCIONES / STAGES */
@@ -142,21 +143,21 @@ html_code = """
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        textarea:focus, select:focus {
+        textarea:focus, select:focus, input:focus {
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
 
         textarea {
             resize: vertical;
-            height: 180px;
+            height: 160px;
         }
 
         .participants-list-preview {
             background: rgba(0,0,0,0.015);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            height: 180px;
+            height: 160px;
             overflow-y: auto;
             padding: 8px;
             display: flex;
@@ -310,24 +311,79 @@ html_code = """
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
+
+        /* MODAL / VENTANA EMERGENTE PARA DECIDIR SOBRE EL GANADOR */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease forwards;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: var(--radius-ios);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
+    <!-- MODAL DE DECISIÓN DE ELIMINACIÓN -->
+    <div class="modal-overlay" id="winner-modal">
+        <div class="modal-card">
+            <div style="font-size: 3rem;" id="modal-emoji">🎉</div>
+            <h3>¡Tenemos Ganador!</h3>
+            <p class="status-text" id="modal-winner-text" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);"></p>
+            <p class="status-text">¿Deseas eliminar a este participante de la ruleta para las siguientes jugadas?</p>
+            <div class="modal-buttons">
+                <button class="ios-btn" style="background: #ff3b30;" onclick="handleWinnerDecision(true)">🗑️ Sí, eliminar</button>
+                <button class="ios-btn" style="background: #34c759;" onclick="handleWinnerDecision(false)">🔄 No, mantener</button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
-        <!-- HEADER DE ESCRITORIO CON LOGO OFICIAL -->
+        <!-- HEADER DE ESCRITORIO CON LOGO Y TÍTULO DEL SORTEO -->
         <header>
             <div class="logo-area">
                 <img src="https://i0.wp.com/neblina105fm.com/wp-content/uploads/2026/03/Recurso-5%402xQaaa-scaled.png?fit=2560%2C891&ssl=1" alt="Neblina 105.5 FM" class="logo-img">
+                <h1 id="header-sorteo-title">Sorteo Interactivo</h1>
             </div>
             <div id="header-stats" class="status-text" style="font-weight: 600;">Participantes: 0</div>
         </header>
 
-        <!-- ETAPA 1: INGRESO DE PARTICIPANTES Y CONFIGURACIÓN -->
+        <!-- ETAPA 1: INGRESO DE PARTICIPANTES, NOMBRE DEL SORTEO Y CONFIGURACIÓN -->
         <section id="stage-1" class="stage active">
             <div class="setup-grid">
                 <div class="panel-box">
-                    <h3>👥 Ingresar Participantes (Máx. 150)</h3>
+                    <h3>🎁 Nombre del Sorteo</h3>
+                    <input type="text" id="sorteo-name-input" placeholder="Ej: Gran Sorteo Aniversario Neblina" value="Sorteo Interactivo">
+                    
+                    <h3 style="margin-top: 10px;">👥 Ingresar Participantes (Máx. 150)</h3>
                     <textarea id="participants-input" placeholder="Escribe o pega los nombres (uno por línea)..."></textarea>
                     <div class="footer-info">Total actual: <span id="count-display">0</span> / 150</div>
                 </div>
@@ -401,6 +457,9 @@ html_code = """
         let targetWinnersCount = 1;
         let pendingBatchWinners = 0;
         let isSpinning = false;
+        let currentWinnerIndex = -1;
+        let currentWinnerName = "";
+        let currentWinnerEmoji = "";
         
         const canvas = document.getElementById('wheelCanvas');
         const ctx = canvas.getContext('2d');
@@ -445,6 +504,12 @@ html_code = """
                 osc.stop(audioCtx.currentTime + index * 0.06 + 0.3);
             });
         }
+
+        // Actualizar el título del sorteo en tiempo real
+        document.getElementById('sorteo-name-input').addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            document.getElementById('header-sorteo-title').innerText = val || "Sorteo Interactivo";
+        });
 
         document.getElementById('participants-input').addEventListener('input', (e) => {
             const rawText = e.target.value;
@@ -595,7 +660,6 @@ html_code = """
                 const numSegments = activeParticipants.length;
                 const arcSize = (2 * Math.PI) / numSegments;
                 
-                // Corrección rigurosa y síncrona: mapeo matemático exacto del puntero superior (270°) con el índice del array
                 const normalizedAngle = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
                 const pointerAngle = (1.5 * Math.PI - normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
                 const currentSegment = Math.floor(pointerAngle / arcSize) % numSegments;
@@ -611,45 +675,56 @@ html_code = """
                     requestAnimationFrame(animateSpin);
                 } else {
                     isSpinning = false;
-                    processWinner(currentSegment);
+                    // Guardamos temporalmente el ganador y mostramos la ventana modal de decisión
+                    currentWinnerIndex = currentSegment;
+                    currentWinnerName = activeParticipants[currentWinnerIndex];
+                    currentWinnerEmoji = vectorEmojis[Math.floor(Math.random() * vectorEmojis.length)];
+                    
+                    playWinSound();
+                    showWinnerModal(currentWinnerName, currentWinnerEmoji);
                 }
             }
 
             requestAnimationFrame(animateSpin);
         }
 
-        function processWinner(winningIndex) {
-            // Sincronización absoluta: el nombre extraído es exactamente el mismo que se calculó al detenerse el puntero
-            const winnerName = activeParticipants[winningIndex];
-            const randomEmoji = vectorEmojis[Math.floor(Math.random() * vectorEmojis.length)];
-            
-            playWinSound();
+        function showWinnerModal(name, emoji) {
+            document.getElementById('modal-winner-text').innerText = name;
+            document.getElementById('modal-emoji').innerText = emoji;
+            document.getElementById('winner-modal').style.display = 'flex';
+        }
+
+        function handleWinnerDecision(shouldRemove) {
+            // Ocultar modal
+            document.getElementById('winner-modal').style.display = 'none';
 
             // Mostrar el nombre idéntico en la tarjeta grande central
-            document.getElementById('display-winner-name').innerText = winnerName;
-            document.getElementById('current-winner-card').querySelector('.winner-avatar').innerText = randomEmoji;
+            document.getElementById('display-winner-name').innerText = currentWinnerName;
+            document.getElementById('current-winner-card').querySelector('.winner-avatar').innerText = currentWinnerEmoji;
 
             // Registrar en el historial de ganadores
             const historyList = document.getElementById('winners-history-list');
             const pill = document.createElement('div');
             pill.className = 'winner-pill';
-            pill.innerHTML = `<span>${randomEmoji}</span> <span>${winnerName}</span>`;
+            pill.innerHTML = `<span>${currentWinnerEmoji}</span> <span>${currentWinnerName}</span>`;
             historyList.prepend(pill);
 
-            // Eliminar de los participantes activos para evitar repetición
-            activeParticipants.splice(winningIndex, 1);
-            updateActiveParticipantsUI();
-            drawWheel();
+            // Eliminar o mantener según la elección del usuario en la ventana modal
+            if (shouldRemove) {
+                activeParticipants.splice(currentWinnerIndex, 1);
+                updateActiveParticipantsUI();
+                drawWheel();
+            }
 
             pendingBatchWinners--;
 
             if (pendingBatchWinners > 0) {
                 setTimeout(() => {
                     executeNextSpin();
-                }, 1500);
+                }, 1000);
             } else {
                 document.getElementById('spin-btn').style.opacity = '1';
-                document.getElementById('spin-status-msg').innerText = "¡Todos los ganadores seleccionados!";
+                document.getElementById('spin-status-msg').innerText = "¡Selección completada!";
             }
         }
 
