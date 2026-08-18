@@ -356,10 +356,10 @@
         <!-- HEADER MULTIPLATAFORMA -->
         <header>
             <div class="logo-area">
-                <img src="3357228.png" alt="Neblina 105.5 FM" class="logo-img">
-                <h1>Sorteo Multiplataforma</h1>
+                <!-- Logo actualizado con el link directo solicitado -->
+                <img src="https://i0.wp.com/neblina105fm.com/wp-content/uploads/2026/03/Recurso-5%402xQaaa-scaled.png?fit=2560%2C891&ssl=1" alt="Neblina 105.5 FM" class="logo-img">
             </div>
-            <!-- Controles para probar en diferentes dispositivos -->
+            <!-- Controles adaptativos para probar en diferentes dispositivos -->
             <div class="device-selector">
                 <button class="device-btn active" onclick="setDevice('desktop', this)">💻 Escritorio</button>
                 <button class="device-btn" onclick="setDevice('tablet', this)">📱 Tablet</button>
@@ -383,7 +383,7 @@
                     <div class="panel-box">
                         <h3>📋 Puestos Generados</h3>
                         <div class="participants-list-preview" id="preview-list">
-                            <div class="preview-item text-secondary" style="color:var(--text-secondary)">Aún no hay participantes...</div>
+                            <div class="preview-item" style="color:var(--text-secondary)">Aún no hay participantes...</div>
                         </div>
                     </div>
 
@@ -462,7 +462,6 @@
             "#5AC8FA", "#007AFF", "#5856D6", "#FF2D55", "#00C7BE"
         ];
 
-        // Cambio de vista multidispositivo simulada
         function setDevice(deviceType, btn) {
             document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -470,7 +469,6 @@
             frame.className = `viewport-frame ${deviceType}`;
         }
 
-        // Web Audio API para efectos de sonido limpios
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playTickSound() {
@@ -680,25 +678,21 @@
             
             playWinSound();
 
-            // Actualizar tarjeta central de ganador
             document.getElementById('display-winner-name').innerText = winnerName;
             document.getElementById('current-winner-card').querySelector('.winner-avatar').innerText = randomEmoji;
 
-            // Agregar al historial de ganadores de la jugada
             const historyList = document.getElementById('winners-history-list');
             const pill = document.createElement('div');
             pill.className = 'winner-pill';
             pill.innerHTML = `<span>${randomEmoji}</span> <span>${winnerName}</span>`;
             historyList.prepend(pill);
 
-            // Remover al ganador de los participantes activos automáticamente para que no repita
             activeParticipants.splice(winningIndex, 1);
             updateActiveParticipantsUI();
             drawWheel();
 
             pendingBatchWinners--;
 
-            // Si se seleccionaron 2 o más ganadores, gira automáticamente de nuevo tras una breve pausa
             if (pendingBatchWinners > 0) {
                 setTimeout(() => {
                     executeNextSpin();
